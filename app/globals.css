@@ -500,6 +500,12 @@ button {
   width: 100%;
 }
 
+.whatsapp-button:disabled {
+  cursor: wait;
+  opacity: 0.82;
+  transform: none;
+}
+
 .email-button {
   display: inline-flex;
   width: 100%;
@@ -553,6 +559,10 @@ button {
   border: 1px solid #ecc1c9;
   background: #fff1f3;
   color: #b3475c;
+}
+
+.share-status {
+  margin: 12px 0 0;
 }
 
 .celebration-pop {

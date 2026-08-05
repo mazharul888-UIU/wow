@@ -36,6 +36,7 @@ import {
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 type Screen = "proposal" | "planner" | "summary";
 type DeliveryState = "idle" | "sending" | "activation" | "sent" | "error";
+type PdfShareState = "idle" | "preparing" | "shared" | "downloaded" | "error";
 
 type Choice = {
   id: string;
@@ -258,10 +259,6 @@ export default function Home() {
     window.setTimeout(() => setCopied(false), 2200);
   };
 
-  const shareWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(planMessage)}`, "_blank", "noopener,noreferrer");
-  };
-
   const restart = () => {
     setScreen("proposal");
     setStep(1);
@@ -357,8 +354,8 @@ export default function Home() {
           date={date}
           foods={selectedFoods}
           notes={notes}
+          planMessage={planMessage}
           restart={restart}
-          shareWhatsApp={shareWhatsApp}
           time={time}
         />
       )}
@@ -702,8 +699,8 @@ function SummaryScreen({
   date,
   foods,
   notes,
+  planMessage,
   restart,
-  shareWhatsApp,
   time,
 }: {
   activity: string;
@@ -712,12 +709,93 @@ function SummaryScreen({
   date: string;
   foods: string[];
   notes: string;
+  planMessage: string;
   restart: () => void;
-  shareWhatsApp: () => void;
   time: string;
 }) {
   const [deliveryState, setDeliveryState] = useState<DeliveryState>("idle");
   const [deliveryMessage, setDeliveryMessage] = useState("");
+  const [pdfShareState, setPdfShareState] = useState<PdfShareState>("idle");
+  const [pdfShareMessage, setPdfShareMessage] = useState("");
+
+  const sharePdfOnWhatsApp = async () => {
+    if (pdfShareState === "preparing") return;
+
+    const placeholderFile = new File([""], "Sami-and-Johra-Date-Plan.pdf", {
+      type: "application/pdf",
+    });
+    const canShareFiles =
+      typeof navigator.share === "function" &&
+      typeof navigator.canShare === "function" &&
+      navigator.canShare({ files: [placeholderFile] });
+    const whatsappWindow = canShareFiles
+      ? null
+      : window.open("about:blank", "_blank");
+    if (whatsappWindow) {
+      whatsappWindow.opener = null;
+    }
+
+    setPdfShareState("preparing");
+    setPdfShareMessage("");
+
+    try {
+      const { createDatePlanPdf } = await import("@/lib/date-plan-pdf");
+      const { blob, fileName } = createDatePlanPdf({
+        date: prettyDate(date),
+        time: prettyTime(time),
+        activity,
+        foods,
+        notes,
+      });
+      const file = new File([blob], fileName, { type: "application/pdf" });
+
+      if (canShareFiles && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Sami & Johra - Our Date Plan",
+          text: "Our date plan is ready ♡",
+        });
+        setPdfShareState("shared");
+        setPdfShareMessage(
+          "PDF share opened. Choose WhatsApp and send it to Sami ♡",
+        );
+        return;
+      }
+
+      const downloadUrl = URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = downloadUrl;
+      downloadLink.download = fileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+        `${planMessage}\n\nI downloaded our date plan as a PDF. I’m attaching it here ♡`,
+      )}`;
+      if (whatsappWindow) {
+        whatsappWindow.location.href = whatsappUrl;
+      } else {
+        window.location.href = whatsappUrl;
+      }
+
+      setPdfShareState("downloaded");
+      setPdfShareMessage(
+        "PDF downloaded. Attach “Sami-and-Johra-Date-Plan.pdf” in WhatsApp ♡",
+      );
+    } catch (error) {
+      whatsappWindow?.close();
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setPdfShareState("idle");
+        return;
+      }
+      setPdfShareState("error");
+      setPdfShareMessage(
+        "Couldn’t prepare the PDF just now. Please try again.",
+      );
+    }
+  };
 
   const sendPlanToSami = async () => {
     if (
@@ -864,11 +942,35 @@ function SummaryScreen({
               {copied ? <CheckCircle2 className="size-[18px]" /> : <Copy className="size-[18px]" />}
               {copied ? "Copied with love!" : "Copy our plan"}
             </button>
-            <button type="button" onClick={shareWhatsApp} className="whatsapp-button group">
-              <Send className="size-[18px] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              Share on WhatsApp
+            <button
+              type="button"
+              onClick={sharePdfOnWhatsApp}
+              disabled={pdfShareState === "preparing"}
+              className="whatsapp-button group"
+            >
+              {pdfShareState === "preparing" ? (
+                <LoaderCircle className="size-[18px] animate-spin" />
+              ) : pdfShareState === "shared" ||
+                pdfShareState === "downloaded" ? (
+                <CheckCircle2 className="size-[18px]" />
+              ) : (
+                <Send className="size-[18px] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              )}
+              {pdfShareState === "preparing"
+                ? "Making your PDF…"
+                : "Share PDF on WhatsApp"}
             </button>
           </div>
+          {pdfShareMessage && (
+            <p
+              className={`email-status share-status ${
+                pdfShareState === "error" ? "error" : "success"
+              }`}
+              role={pdfShareState === "error" ? "alert" : "status"}
+            >
+              {pdfShareMessage}
+            </p>
+          )}
           <p className="mt-4 text-center text-[10px] leading-4 text-[#a67d84]">
             Your choices are only sent when you tap the confirm button.
           </p>
