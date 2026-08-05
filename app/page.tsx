@@ -35,7 +35,7 @@ import {
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 type Screen = "proposal" | "planner" | "summary";
-type DeliveryState = "idle" | "sending" | "sent" | "error";
+type DeliveryState = "idle" | "sending" | "activation" | "sent" | "error";
 
 type Choice = {
   id: string;
@@ -129,6 +129,8 @@ const steps = [
 ];
 
 const confettiPalette = ["#e76d86", "#f2af9d", "#efc971", "#b99bc9", "#84b6a7", "#f8dce1"];
+const formSubmitEndpoint =
+  "https://formsubmit.co/ajax/mazharulislam8897@gmail.com";
 
 function toLocalDateInput(date: Date) {
   const offset = date.getTimezoneOffset();
@@ -718,35 +720,65 @@ function SummaryScreen({
   const [deliveryMessage, setDeliveryMessage] = useState("");
 
   const sendPlanToSami = async () => {
-    if (deliveryState === "sending" || deliveryState === "sent") return;
+    if (
+      deliveryState === "sending" ||
+      deliveryState === "activation" ||
+      deliveryState === "sent"
+    ) {
+      return;
+    }
 
     setDeliveryState("sending");
     setDeliveryMessage("");
 
     try {
-      const response = await fetch("/api/date-plan", {
+      const response = await fetch(formSubmitEndpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
-          date,
-          time,
-          activity,
-          foods,
-          notes,
-          website: "",
+          _subject: "💌 Johra said YES — a new date plan!",
+          _template: "table",
+          _captcha: "false",
+          _honey: "",
+          _url: window.location.href,
+          "Submitted by": "Johra",
+          Date: prettyDate(date),
+          Time: prettyTime(time),
+          "Date vibe": activity,
+          Food: foods.join(", "),
+          "Special note": notes.trim() || "No special requests",
+          "Submitted at": new Date().toISOString(),
         }),
       });
 
-      if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as {
+        success?: boolean | string;
+        message?: string;
+      } | null;
+      const providerAccepted =
+        result?.success === true || result?.success === "true";
+      const activationRequired =
+        response.ok &&
+        result?.success === "false" &&
+        /activation|activate form/i.test(result.message ?? "");
+
+      if (!response.ok || (!providerAccepted && !activationRequired)) {
         throw new Error("The plan could not be delivered.");
       }
 
+      if (activationRequired) {
+        setDeliveryState("activation");
+        setDeliveryMessage(
+          "Activation email sent to Sami. He only needs to tap “Activate Form” once—this plan will then arrive in his inbox.",
+        );
+        return;
+      }
+
       setDeliveryState("sent");
-      setDeliveryMessage(
-        "Sent to Sami’s inbox! If this is the first plan, Sami may need to confirm the FormSubmit activation email once.",
-      );
+      setDeliveryMessage("Sent to Sami’s inbox! Your date plan is on its way ♡");
     } catch {
       setDeliveryState("error");
       setDeliveryMessage("Couldn’t send it just now. Please try again or share it on WhatsApp.");
@@ -797,15 +829,23 @@ function SummaryScreen({
           <button
             type="button"
             onClick={sendPlanToSami}
-            disabled={deliveryState === "sending" || deliveryState === "sent"}
-            className={`email-button group ${deliveryState === "sent" ? "sent" : ""}`}
+            disabled={
+              deliveryState === "sending" ||
+              deliveryState === "activation" ||
+              deliveryState === "sent"
+            }
+            className={`email-button group ${
+              deliveryState === "activation" || deliveryState === "sent" ? "sent" : ""
+            }`}
           >
             {deliveryState === "sending" && <LoaderCircle className="size-5 animate-spin" />}
             {deliveryState === "sent" && <CheckCircle2 className="size-5" />}
+            {deliveryState === "activation" && <Mail className="size-5" />}
             {(deliveryState === "idle" || deliveryState === "error") && <Mail className="size-5" />}
             <span>
               {deliveryState === "sending" && "Sending our plan…"}
               {deliveryState === "sent" && "Plan sent to Sami!"}
+              {deliveryState === "activation" && "Check Sami’s email to activate"}
               {(deliveryState === "idle" || deliveryState === "error") && "Confirm & send to Sami"}
             </span>
           </button>
