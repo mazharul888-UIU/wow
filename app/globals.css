@@ -87,12 +87,114 @@ button {
 .yes-button:focus-visible,
 .no-button:focus-visible,
 .continue-button:focus-visible,
+.email-button:focus-visible,
 .copy-button:focus-visible,
 .whatsapp-button:focus-visible,
 .choice-card:focus-visible,
 .back-button:focus-visible {
   outline: 3px solid rgba(205, 82, 107, 0.28);
   outline-offset: 3px;
+}
+
+.simple-proposal-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(229, 180, 188, 0.9);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.96), transparent 42%),
+    linear-gradient(145deg, rgba(255, 252, 250, 0.98), rgba(253, 236, 238, 0.92));
+  box-shadow: 0 28px 90px rgba(117, 58, 70, 0.17);
+  backdrop-filter: blur(16px);
+}
+
+.simple-proposal-card::after {
+  position: absolute;
+  inset: 9px;
+  z-index: -1;
+  border: 1px solid rgba(226, 178, 186, 0.52);
+  border-radius: 23px;
+  content: "";
+}
+
+.proposal-title {
+  font-weight: 900;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
+}
+
+.proposal-heart {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  color: rgba(226, 132, 149, 0.12);
+  stroke-width: 1;
+}
+
+.proposal-heart-left {
+  bottom: -38px;
+  left: -28px;
+  transform: rotate(-18deg);
+}
+
+.proposal-heart-right {
+  right: -30px;
+  top: -35px;
+  transform: rotate(18deg);
+}
+
+.answer-panel {
+  overflow: hidden;
+  border: 1px solid #e7c6ca;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 2px 18px rgba(111, 56, 67, 0.045);
+}
+
+.answer-zone {
+  height: 155px;
+}
+
+.proposal-yes {
+  position: absolute;
+  left: 27%;
+  top: 50%;
+  z-index: 8;
+  display: inline-flex;
+  min-height: 56px;
+  min-width: 178px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transform: translate(-50%, -50%);
+  border: 1px solid #b9425a;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e46880, #ca4963);
+  padding: 0 18px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 14px 30px rgba(190, 63, 89, 0.3), inset 0 1px rgba(255, 255, 255, 0.3);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.proposal-yes:hover {
+  transform: translate(-50%, -54%) scale(1.03);
+  box-shadow: 0 18px 35px rgba(190, 63, 89, 0.35), inset 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.proposal-yes:active {
+  transform: translate(-50%, -48%) scale(0.98);
+}
+
+.proposal-yes:focus-visible {
+  outline: 3px solid rgba(205, 82, 107, 0.28);
+  outline-offset: 3px;
+}
+
+.proposal-no {
+  min-width: 92px;
+  min-height: 54px;
+  font-size: 14px;
 }
 
 .invitation-card::before {
@@ -398,6 +500,61 @@ button {
   width: 100%;
 }
 
+.email-button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #bb465e;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #e46880, #c94762);
+  color: white;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 12px 26px rgba(193, 67, 92, 0.24);
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.email-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(193, 67, 92, 0.3);
+}
+
+.email-button.sent {
+  border-color: #5e8f7f;
+  background: linear-gradient(135deg, #72a795, #4f8875);
+  box-shadow: 0 12px 26px rgba(68, 124, 104, 0.2);
+}
+
+.email-button:disabled {
+  cursor: default;
+}
+
+.email-status {
+  margin: 0 0 14px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.email-status.success {
+  border: 1px solid #c8dfd6;
+  background: #f0f8f5;
+  color: #4e796b;
+}
+
+.email-status.error {
+  border: 1px solid #ecc1c9;
+  background: #fff1f3;
+  color: #b3475c;
+}
+
 .celebration-pop {
   animation: celebrationPop 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -488,6 +645,27 @@ button {
 }
 
 @media (max-width: 420px) {
+  .simple-proposal-card {
+    border-radius: 25px;
+  }
+
+  .answer-zone {
+    height: 145px;
+  }
+
+  .proposal-yes {
+    left: 28%;
+    min-height: 52px;
+    min-width: 144px;
+    padding: 0 13px;
+    font-size: 12px;
+  }
+
+  .proposal-no {
+    min-width: 76px;
+    min-height: 50px;
+  }
+
   .choice-card {
     min-height: 112px;
     padding: 13px;

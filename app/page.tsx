@@ -11,10 +11,10 @@ import {
   Coffee,
   Copy,
   Croissant,
-  Flower2,
   Heart,
   IceCreamBowl,
-  Laugh,
+  LoaderCircle,
+  Mail,
   MessageCircleHeart,
   MoonStar,
   PartyPopper,
@@ -23,21 +23,19 @@ import {
   RefreshCcw,
   Send,
   Sparkles,
-  Star,
   UtensilsCrossed,
   WandSparkles,
 } from "lucide-react";
 import {
   type ComponentType,
-  type RefObject,
   useCallback,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 type Screen = "proposal" | "planner" | "summary";
+type DeliveryState = "idle" | "sending" | "sent" | "error";
 
 type Choice = {
   id: string;
@@ -167,9 +165,8 @@ export default function Home() {
   const [notes, setNotes] = useState("");
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
-  const [noPosition, setNoPosition] = useState({ x: 58, y: 58 });
+  const [noPosition, setNoPosition] = useState({ x: 74, y: 50 });
   const [noMoves, setNoMoves] = useState(0);
-  const noZoneRef = useRef<HTMLDivElement>(null);
 
   const today = useMemo(() => toLocalDateInput(new Date()), []);
 
@@ -178,14 +175,11 @@ export default function Home() {
       event?.preventDefault();
       event?.stopPropagation();
 
-      let nextX = 10 + Math.random() * 72;
-      let nextY = 8 + Math.random() * 72;
+      const nextX = 64 + Math.random() * 23;
+      let nextY = 17 + Math.random() * 66;
 
-      if (Math.abs(nextX - noPosition.x) < 28) {
-        nextX = nextX > 46 ? 10 + Math.random() * 18 : 66 + Math.random() * 16;
-      }
       if (Math.abs(nextY - noPosition.y) < 24) {
-        nextY = nextY > 46 ? 8 + Math.random() * 18 : 65 + Math.random() * 16;
+        nextY = nextY > 50 ? 17 + Math.random() * 18 : 65 + Math.random() * 18;
       }
 
       setNoPosition({ x: nextX, y: nextY });
@@ -276,7 +270,7 @@ export default function Home() {
     setNotes("");
     setError("");
     setCopied(false);
-    setNoPosition({ x: 58, y: 58 });
+    setNoPosition({ x: 74, y: 50 });
     setNoMoves(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -303,7 +297,7 @@ export default function Home() {
           </span>
         </button>
 
-        <div className="love-pill flex items-center gap-2.5 rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[.17em] text-[#9e5967] sm:text-[11px]">
+        <div className="love-pill hidden items-center gap-2.5 rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[.17em] text-[#9e5967] sm:flex sm:text-[11px]">
           <Sparkles className="size-3.5 text-[#d9657d]" />
           <span>I love you, Johra</span>
         </div>
@@ -314,7 +308,6 @@ export default function Home() {
           dodgeNo={dodgeNo}
           noMoves={noMoves}
           noPosition={noPosition}
-          noZoneRef={noZoneRef}
           onYes={() => {
             setScreen("planner");
             window.scrollTo({ top: 0, behavior: "smooth" });
@@ -375,121 +368,77 @@ function ProposalScreen({
   dodgeNo,
   noMoves,
   noPosition,
-  noZoneRef,
   onYes,
 }: {
   dodgeNo: (event?: { preventDefault: () => void; stopPropagation: () => void }) => void;
   noMoves: number;
   noPosition: { x: number; y: number };
-  noZoneRef: RefObject<HTMLDivElement | null>;
   onYes: () => void;
 }) {
   return (
-    <section className="relative z-10 mx-auto grid min-h-[calc(100svh-84px)] w-full max-w-6xl items-center gap-10 px-5 pb-10 pt-3 sm:px-8 lg:grid-cols-[1.06fr_.94fr] lg:gap-16 lg:pb-16">
-      <div className="relative z-10 mx-auto max-w-[650px] text-center lg:mx-0 lg:text-left">
-        <div className="mb-7 inline-flex items-center gap-2.5 rounded-full border border-[#edcbd0] bg-white/60 px-4 py-2 text-[10px] font-bold uppercase tracking-[.24em] text-[#ab6572] backdrop-blur sm:text-[11px]">
-          <span className="h-px w-4 bg-[#d78494]" />
-          A little question for my favorite person
+    <section className="relative z-10 mx-auto flex min-h-[calc(100svh-84px)] w-full max-w-5xl items-center justify-center px-5 pb-12 pt-3 sm:px-8 sm:pb-20">
+      <div className="simple-proposal-card w-full max-w-[820px] px-5 py-8 text-center sm:px-12 sm:py-12">
+        <Heart className="proposal-heart proposal-heart-left" aria-hidden />
+        <Heart className="proposal-heart proposal-heart-right" aria-hidden />
+
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#e9bcc4] bg-white/75 px-4 py-2 text-[10px] font-black uppercase tracking-[.22em] text-[#b64f65] sm:text-xs">
+          <Sparkles className="size-3.5" />
+          I love you, Johra
         </div>
 
-        <h1 className="font-display text-[clamp(3.6rem,12vw,7.8rem)] leading-[.79] tracking-[-.055em] text-[#543238]">
-          Will you go
-          <span className="relative block italic text-[#d85f78]">
-            on a date
-            <span className="hand-underline absolute -bottom-3 left-1/2 h-4 w-[78%] -translate-x-1/2 lg:left-0 lg:translate-x-0" />
+        <h1 className="proposal-title font-display text-[clamp(2.45rem,9vw,6.7rem)] leading-[.88] tracking-[-.055em] text-[#4c2c32]">
+          <span className="block text-[#d45770]">Johra,</span>
+          <span className="block">will you go on a</span>
+          <span className="relative mx-auto mt-1 block w-fit italic text-[#d45770]">
+            date with me?
+            <span className="hand-underline absolute -bottom-2 left-1/2 h-3 w-[90%] -translate-x-1/2" />
           </span>
-          <span className="block">with me?</span>
         </h1>
 
-        <p className="mx-auto mt-9 max-w-[490px] text-[15px] leading-7 text-[#7f5b60] sm:text-base lg:mx-0">
-          I have a thousand reasons to love you and one tiny plan to make you smile.
-          Pick our perfect little date, Johra.
+        <p className="mx-auto mt-7 max-w-xl text-base font-bold leading-7 text-[#735158] sm:text-lg">
+          One simple question. One beautiful date. And my favorite person—you.
         </p>
 
-        <div className="mt-9 flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:justify-start">
-          <button className="yes-button group" type="button" onClick={onYes}>
-            <span className="grid size-9 place-items-center rounded-full bg-white/20">
-              <Heart className="size-[18px] fill-white text-white transition-transform group-hover:scale-125" />
-            </span>
-            <span>Yes, a thousand times!</span>
-            <ArrowRight className="size-[18px] transition-transform group-hover:translate-x-1" />
-          </button>
-          <div className="flex items-center gap-2 text-[11px] font-semibold text-[#a87880]">
-            <Star className="size-3.5 fill-[#edbd72] text-[#edbd72]" />
-            Psst… there&apos;s only one right answer
-          </div>
-        </div>
-
-        <div className="mt-10 flex items-center justify-center gap-3 text-[11px] uppercase tracking-[.18em] text-[#aa7b82] lg:justify-start">
-          <span className="h-px w-8 bg-[#e7c4c9]" />
-          Sami loves you to infinity
-          <span aria-hidden>∞</span>
-        </div>
-      </div>
-
-      <div className="relative mx-auto w-full max-w-[520px]">
-        <div className="absolute -left-4 top-12 z-20 hidden rotate-[-12deg] items-center gap-2 rounded-full border border-[#ead2b1] bg-[#fff5dc] px-4 py-2 text-xs font-bold text-[#95652b] shadow-lg sm:flex">
-          <Sparkles className="size-4" />
-          Limited edition: us
-        </div>
-
-        <div className="invitation-card relative rotate-[1.6deg] rounded-[30px] border border-white/90 bg-[#fffdfb]/90 p-3 shadow-[0_30px_80px_rgba(117,59,70,.16)] backdrop-blur sm:rounded-[38px] sm:p-4">
-          <div className="relative overflow-hidden rounded-[24px] border border-[#ead9d5] bg-[#fdf3f0] px-5 pb-5 pt-7 sm:rounded-[31px] sm:px-8 sm:pb-7 sm:pt-9">
-            <div className="absolute -right-8 -top-9 size-32 rounded-full border-[22px] border-[#f4ccd4]/60" />
-            <div className="absolute -bottom-12 -left-10 size-36 rounded-full border-[26px] border-[#f5dfc6]/60" />
-            <Flower2 className="absolute right-7 top-7 size-6 text-[#d98796]" strokeWidth={1.3} />
-
-            <div className="mb-5 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-[.3em] text-[#b67882]">Official date invitation</p>
-              <div className="mx-auto my-4 flex items-center justify-center gap-3 text-[#d27a8a]">
-                <span className="h-px w-12 bg-[#e3b3bb]" />
-                <Heart className="size-4 fill-[#d9778a]" />
-                <span className="h-px w-12 bg-[#e3b3bb]" />
-              </div>
-              <h2 className="font-display text-4xl italic text-[#55363a] sm:text-5xl">Dear Johra,</h2>
-              <p className="mt-3 text-sm leading-6 text-[#836166]">Can I reserve a little piece of your time?</p>
-            </div>
-
-            <div
-              className="no-zone relative h-52 overflow-hidden rounded-2xl border border-dashed border-[#dfbac0] bg-white/45 sm:h-56"
-              ref={noZoneRef}
-              aria-label="Playful answer area"
+        <div className="answer-panel mx-auto mt-8 max-w-[620px]">
+          <p className="pt-5 text-xs font-black uppercase tracking-[.2em] text-[#a95c6a]">
+            Choose your answer ♡
+          </p>
+          <div className="answer-zone relative" aria-label="Choose yes or no">
+            <button className="proposal-yes group" type="button" onClick={onYes}>
+              <Heart className="size-5 fill-white text-white transition-transform group-hover:scale-125" />
+              <span>Yes, I&apos;d love to!</span>
+            </button>
+            <button
+              type="button"
+              className="no-button proposal-no"
+              style={{
+                left: `${noPosition.x}%`,
+                top: `${noPosition.y}%`,
+              }}
+              onPointerEnter={dodgeNo}
+              onPointerDown={dodgeNo}
+              onClick={dodgeNo}
+              onFocus={dodgeNo}
+              aria-label="No — this playful button runs away"
             >
-              <div className="absolute left-4 top-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.2em] text-[#bd8b93]">
-                <Laugh className="size-4" />
-                Catch it if you can
-              </div>
-              <button
-                type="button"
-                className="no-button"
-                style={{
-                  left: `${noPosition.x}%`,
-                  top: `${noPosition.y}%`,
-                }}
-                onPointerEnter={dodgeNo}
-                onPointerDown={dodgeNo}
-                onClick={dodgeNo}
-                onFocus={dodgeNo}
-                aria-label="No — this playful button runs away"
-              >
-                No
-              </button>
-
-              <div className="pointer-events-none absolute bottom-4 left-1/2 w-full -translate-x-1/2 text-center text-[11px] text-[#af7f87]">
-                {noMoves === 0 && "This answer seems a little shy…"}
-                {noMoves > 0 && noMoves < 3 && "Oops! Not today 😌"}
-                {noMoves >= 3 && noMoves < 6 && "The universe says try the pink button ♡"}
-                {noMoves >= 6 && "Still faster than you, pretty girl! ✨"}
-              </div>
-            </div>
-
-            <div className="mt-5 flex items-center justify-between border-t border-[#ead7d4] pt-4 text-[10px] font-bold uppercase tracking-[.17em] text-[#bc8a91]">
-              <span>To: My favorite</span>
-              <span>From: Yours, always</span>
-            </div>
+              No
+            </button>
           </div>
+
+          <p className="min-h-6 px-4 pb-5 text-xs font-semibold text-[#a66f79]" aria-live="polite">
+            {noMoves === 0 && "Yes will take you to the next round ✨"}
+            {noMoves > 0 && noMoves < 3 && "Oops! The No button ran away 😌"}
+            {noMoves >= 3 && noMoves < 6 && "It really wants you to choose Yes ♡"}
+            {noMoves >= 6 && "Still too quick—try the pink button! ✨"}
+          </p>
         </div>
-        <div className="absolute -bottom-5 right-5 -z-10 h-16 w-40 rotate-[-7deg] rounded-2xl bg-[#ecc4b6]/60 blur-[1px]" />
+
+        <div className="mt-7 flex items-center justify-center gap-3 text-[11px] font-black uppercase tracking-[.2em] text-[#a35f6c]">
+          <span className="h-px w-8 bg-[#ddb1b8]" />
+          Sami loves you to infinity
+          <span className="font-display text-xl" aria-hidden>∞</span>
+          <span className="h-px w-8 bg-[#ddb1b8]" />
+        </div>
       </div>
     </section>
   );
@@ -765,6 +714,45 @@ function SummaryScreen({
   shareWhatsApp: () => void;
   time: string;
 }) {
+  const [deliveryState, setDeliveryState] = useState<DeliveryState>("idle");
+  const [deliveryMessage, setDeliveryMessage] = useState("");
+
+  const sendPlanToSami = async () => {
+    if (deliveryState === "sending" || deliveryState === "sent") return;
+
+    setDeliveryState("sending");
+    setDeliveryMessage("");
+
+    try {
+      const response = await fetch("/api/date-plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date,
+          time,
+          activity,
+          foods,
+          notes,
+          website: "",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("The plan could not be delivered.");
+      }
+
+      setDeliveryState("sent");
+      setDeliveryMessage(
+        "Sent to Sami’s inbox! If this is the first plan, Sami may need to confirm the FormSubmit activation email once.",
+      );
+    } catch {
+      setDeliveryState("error");
+      setDeliveryMessage("Couldn’t send it just now. Please try again or share it on WhatsApp.");
+    }
+  };
+
   return (
     <section className="relative z-10 mx-auto flex min-h-[calc(100svh-84px)] w-full max-w-5xl flex-col items-center px-5 pb-14 pt-3 sm:px-8 sm:pb-20 sm:pt-7">
       <Confetti />
@@ -806,6 +794,31 @@ function SummaryScreen({
         )}
 
         <div className="border-t border-[#ead8d4] bg-white px-5 py-6 sm:px-8 sm:py-7">
+          <button
+            type="button"
+            onClick={sendPlanToSami}
+            disabled={deliveryState === "sending" || deliveryState === "sent"}
+            className={`email-button group ${deliveryState === "sent" ? "sent" : ""}`}
+          >
+            {deliveryState === "sending" && <LoaderCircle className="size-5 animate-spin" />}
+            {deliveryState === "sent" && <CheckCircle2 className="size-5" />}
+            {(deliveryState === "idle" || deliveryState === "error") && <Mail className="size-5" />}
+            <span>
+              {deliveryState === "sending" && "Sending our plan…"}
+              {deliveryState === "sent" && "Plan sent to Sami!"}
+              {(deliveryState === "idle" || deliveryState === "error") && "Confirm & send to Sami"}
+            </span>
+          </button>
+
+          {deliveryMessage && (
+            <p
+              className={`email-status ${deliveryState === "error" ? "error" : "success"}`}
+              role={deliveryState === "error" ? "alert" : "status"}
+            >
+              {deliveryMessage}
+            </p>
+          )}
+
           <div className="grid gap-3 sm:grid-cols-[.9fr_1.1fr]">
             <button type="button" onClick={copyPlan} className="copy-button">
               {copied ? <CheckCircle2 className="size-[18px]" /> : <Copy className="size-[18px]" />}
@@ -813,11 +826,11 @@ function SummaryScreen({
             </button>
             <button type="button" onClick={shareWhatsApp} className="whatsapp-button group">
               <Send className="size-[18px] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              Confirm & share on WhatsApp
+              Share on WhatsApp
             </button>
           </div>
           <p className="mt-4 text-center text-[10px] leading-4 text-[#a67d84]">
-            Your choices stay private on this device until you choose to share them.
+            Your choices are only sent when you tap the confirm button.
           </p>
         </div>
       </div>
